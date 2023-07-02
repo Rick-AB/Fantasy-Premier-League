@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Fpl</string>
+    <string name="substitute">Substitute</string>
+    <string name="full_profile">Full Profile</string>
+    <string name="form">Form</string>
+    <string name="value">Value</string>
+    <string name="selected">Selected</string>
+    <string name="total">Total</string>
+    <string name="ict_index">ICT index</string>
+    <string name="captain">Captain</string>
+    <string name="vice_captain">Vice Captain</string>
+</resources>
