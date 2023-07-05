@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -27,16 +29,22 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.fpl.R
 import com.example.fpl.model.FplPlayerWithStats
@@ -54,6 +62,8 @@ import com.example.fpl.ui.theme.SeaBlue
 @Composable
 fun PlayerProfile(
     selectedPlayerProfile: FplPlayerWithStats,
+    isCaptain: Boolean,
+    isViceCaptain: Boolean,
     closeModal: () -> Unit,
     selectCaptain: () -> Unit,
     selectViceCaptain: () -> Unit
@@ -82,7 +92,11 @@ fun PlayerProfile(
 
         Buttons(modifier = Modifier.padding(horizontal = 8.dp, vertical = 24.dp))
         CaptainActions(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding(),
+            isCaptain = isCaptain,
+            isViceCaptain = isViceCaptain,
             selectCaptain = selectCaptain,
             selectViceCaptain = selectViceCaptain
         )
@@ -213,20 +227,33 @@ private fun Stats(
     totalPoints: Int,
     ictIndex: Int
 ) {
-    val semiTransparent = Color.Gray.copy(alpha = 0.1F)
+    val semiTransparent = Color.Gray.copy(alpha = 0.4F)
+    var offsetY by remember { mutableStateOf(0) }
+
     Surface(
-        modifier = modifier.shadow(
-            elevation = 4.dp,
-            shape = Shapes().small,
-            clip = false,
-            ambientColor = semiTransparent,
-            spotColor = semiTransparent
-        ),
+        modifier = modifier
+            .shadow(
+                elevation = 4.dp,
+                shape = Shapes().medium,
+                clip = false,
+                ambientColor = semiTransparent,
+                spotColor = semiTransparent
+            )
+            .onGloballyPositioned { layoutCoordinates ->
+                val heightInPx = layoutCoordinates.size.height
+                offsetY = -heightInPx / 2
+            }
+            .offset { IntOffset(0, offsetY) },
         color = semiTransparent,
     ) {
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(24.dp),
-            contentPadding = PaddingValues(start = 24.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+            contentPadding = PaddingValues(
+                start = 24.dp,
+                end = 12.dp,
+                top = 12.dp,
+                bottom = 12.dp
+            ),
         ) {
             item {
                 StatItem(
@@ -277,10 +304,17 @@ private fun Stats(
             }
         }
     }
+
 }
 
 @Composable
-fun CaptainActions(modifier: Modifier, selectCaptain: () -> Unit, selectViceCaptain: () -> Unit) {
+fun CaptainActions(
+    modifier: Modifier,
+    isCaptain: Boolean,
+    isViceCaptain: Boolean,
+    selectCaptain: () -> Unit,
+    selectViceCaptain: () -> Unit
+) {
     Row(
         modifier = modifier.background(DarkPurpleVariant),
         verticalAlignment = Alignment.CenterVertically
@@ -288,14 +322,14 @@ fun CaptainActions(modifier: Modifier, selectCaptain: () -> Unit, selectViceCapt
         CaptainItem(
             modifier = Modifier.weight(1f),
             text = stringResource(id = R.string.captain),
-            checked = true,
+            checked = isCaptain,
             onClick = selectCaptain
         )
 
         CaptainItem(
             modifier = Modifier.weight(1f),
             text = stringResource(id = R.string.vice_captain),
-            checked = false,
+            checked = isViceCaptain,
             onClick = selectViceCaptain
         )
     }
@@ -316,7 +350,9 @@ fun CaptainItem(
             colors = CheckboxDefaults.colors(
                 checkedColor = Color.White,
                 checkmarkColor = DarkPurple,
-                uncheckedColor = Color.Gray
+                uncheckedColor = Color.Gray,
+                disabledCheckedColor = Color.White,
+                disabledUncheckedColor = Color.Gray
             )
         )
 
@@ -363,5 +399,10 @@ fun PlayerProfilePrev() {
         totalPoints,
         ictIndex
     )
-    PlayerProfile(player, {}, {}) {}
+    PlayerProfile(player,
+        isCaptain = true,
+        isViceCaptain = false,
+        closeModal = {},
+        selectCaptain = {}
+    ) {}
 }

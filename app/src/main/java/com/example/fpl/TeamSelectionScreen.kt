@@ -51,7 +51,7 @@ import com.example.fpl.component.drawField
 import com.example.fpl.component.drawFieldLine
 import com.example.fpl.component.drawKickOffLine
 import com.example.fpl.model.Field
-import com.example.fpl.model.FplPlayer
+import com.example.fpl.model.FplPlayerWithFieldAttributes
 import com.example.fpl.model.FplPlayerWithStats
 import com.example.fpl.ui.theme.DarkPurple
 import com.example.fpl.ui.theme.LightGray
@@ -120,6 +120,8 @@ fun TeamSelectionBody(
             ) {
                 PlayerProfile(
                     selectedPlayerProfile = selectedPlayerProfile,
+                    isCaptain = selectedPlayerProfile.player.id == squadState.captainId,
+                    isViceCaptain = selectedPlayerProfile.player.id == squadState.viceCaptainId,
                     closeModal = closeModal,
                     selectCaptain = { selectCaptain(selectedPlayerProfile.player.id); closeModal() },
                     selectViceCaptain = { selectViceCaptain(selectedPlayerProfile.player.id); closeModal() }
@@ -255,7 +257,7 @@ fun GameweekHeader(modifier: Modifier) {
 
 @Composable
 fun FieldLayoutScope.Starters(
-    starters: List<FplPlayer>,
+    starters: List<FplPlayerWithFieldAttributes>,
     contentWidth: Dp,
     captainId: Int,
     viceCaptainId: Int,
@@ -275,7 +277,7 @@ fun FieldLayoutScope.Starters(
 }
 
 @Composable
-fun Substitutes(substitutes: List<FplPlayer>, contentWidth: Dp, modifier: Modifier) {
+fun Substitutes(substitutes: List<FplPlayerWithFieldAttributes>, contentWidth: Dp, modifier: Modifier) {
     val zeroCornerSize = CornerSize(0.dp)
     Row(
         modifier = modifier

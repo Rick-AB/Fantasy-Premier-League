@@ -2,6 +2,7 @@
 
 package com.example.fpl.component
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,32 +28,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.fpl.model.FplPlayer
+import com.example.fpl.model.FplPlayerWithFieldAttributes
 import com.example.fpl.model.FplPlayerWithStats
-import com.example.fpl.model.stats
 import com.example.fpl.ui.theme.DarkPurple
 
 @Composable
 fun PlayerCard(
     modifier: Modifier,
-    player: FplPlayer,
+    player: FplPlayerWithFieldAttributes,
     isCaptain: Boolean = false,
     isViceCaptain: Boolean = false,
     onClick: (FplPlayerWithStats) -> Unit
 ) {
-    Column(modifier = modifier.clickable {
-        val (form, price, selectedPercentage, gameweekPoints, totalPoints, ictIndex) = stats
-        val fplPlayerWithStats = FplPlayerWithStats(
-            player = player,
-            form = form,
-            price = price,
-            selectedPercentage = selectedPercentage,
-            gameweekPoints = gameweekPoints,
-            totalPoints = totalPoints,
-            ictIndex = ictIndex
-        )
-        onClick(fplPlayerWithStats)
-    }) {
+    Column(modifier = modifier.clickable { onClick(player.toFplPlayerWithStats()) }) {
         Box {
             Image(
                 painter = painterResource(id = player.shirtRes),
@@ -63,13 +51,9 @@ fun PlayerCard(
             )
 
             Column(modifier = Modifier.align(Alignment.TopEnd)) {
-                if (isCaptain) {
-                    PlayerArmBand(char = 'C')
-                }
+                AnimatedVisibility(visible = isCaptain) { PlayerArmBand(char = 'C') }
 
-                if (isViceCaptain) {
-                    PlayerArmBand(char = 'V')
-                }
+                AnimatedVisibility(visible = isViceCaptain) { PlayerArmBand(char = 'V') }
             }
         }
 
@@ -86,7 +70,7 @@ fun PlayerCard(
                 .height(20.dp)
                 .background(DarkPurple)
                 .wrapContentHeight(align = Alignment.CenterVertically)
-                .padding(horizontal = 12.dp)
+                .padding(horizontal = 8.dp)
         )
 
         val bottomCornerSize = CornerSize(6.dp)
@@ -106,7 +90,7 @@ fun PlayerCard(
                     )
                 )
                 .wrapContentHeight(align = Alignment.CenterVertically)
-                .padding(horizontal = 12.dp)
+                .padding(horizontal = 8.dp)
         )
     }
 }
