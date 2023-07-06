@@ -25,10 +25,15 @@ class MainActivity : ComponentActivity() {
                     TeamSelectionScreen(
                         squadState = squadState,
                         selectedPlayerProfile = selectedPlayerProfile,
-                        onPlayerClick = { selectedPlayerProfile = it },
+                        setPlayerProfile = { selectedPlayerProfile = it },
                         closeModal = { selectedPlayerProfile = null },
                         selectCaptain = { playerId -> squadState.selectCaptain(playerId) },
-                        selectViceCaptain = { playerId -> squadState.selectViceCaptain(playerId) }
+                        selectViceCaptain = { playerId -> squadState.selectViceCaptain(playerId) },
+                        selectPlayerToSub = { playerId ->
+                            val playerWithFieldAttributes =
+                                (squadState.starters + squadState.substitutes).find { it.id == playerId }
+                            squadState.playerToSub.value = playerWithFieldAttributes
+                        }
                     )
                 }
             }

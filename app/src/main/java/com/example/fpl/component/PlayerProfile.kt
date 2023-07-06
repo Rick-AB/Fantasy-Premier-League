@@ -66,7 +66,8 @@ fun PlayerProfile(
     isViceCaptain: Boolean,
     closeModal: () -> Unit,
     selectCaptain: () -> Unit,
-    selectViceCaptain: () -> Unit
+    selectViceCaptain: () -> Unit,
+    onSubstituteClick: () -> Unit,
 ) {
     val (player, form, price, selectedPercentage, gameweekPoints, totalPoints, ictIndex) = selectedPlayerProfile
 
@@ -90,7 +91,10 @@ fun PlayerProfile(
             ictIndex = ictIndex
         )
 
-        Buttons(modifier = Modifier.padding(horizontal = 8.dp, vertical = 24.dp))
+        Buttons(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 24.dp),
+            onSubstituteClick = onSubstituteClick
+        )
         CaptainActions(
             modifier = Modifier
                 .fillMaxWidth()
@@ -169,12 +173,15 @@ fun PlayerDetails(
 }
 
 @Composable
-fun Buttons(modifier: Modifier) {
+fun Buttons(
+    modifier: Modifier,
+    onSubstituteClick: () -> Unit,
+) {
     Row(modifier = modifier) {
         val buttonShape = Shapes().extraSmall
         val buttonHeight = 60.dp
         Button(
-            onClick = { /*TODO*/ },
+            onClick = onSubstituteClick,
             colors = ButtonDefaults.buttonColors(
                 contentColor = DarkPurple,
                 containerColor = Color.Transparent
@@ -403,6 +410,7 @@ fun PlayerProfilePrev() {
         isCaptain = true,
         isViceCaptain = false,
         closeModal = {},
-        selectCaptain = {}
+        selectCaptain = {},
+        selectViceCaptain = {}
     ) {}
 }

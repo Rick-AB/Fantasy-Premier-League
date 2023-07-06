@@ -3,6 +3,7 @@ package com.example.fpl
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
@@ -33,3 +34,8 @@ fun Modifier.surface(
     .then(if (border != null) Modifier.border(border, shape) else Modifier)
     .background(color = backgroundColor, shape = shape)
     .clip(shape)
+
+fun <T> SnapshotStateList<T>.swapList(newList: List<T>) {
+    clear()
+    addAll(newList)
+}

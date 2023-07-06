@@ -6,10 +6,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import com.example.fpl.model.FplPlayer
 import com.example.fpl.model.FplPlayerWithFieldAttributes
 import com.example.fpl.model.PlayerPosition
+
 typealias GroupedPlayers = Map<PlayerPosition, List<FplPlayerWithFieldAttributes>>
 
 @Composable
@@ -21,12 +23,16 @@ fun rememberSquadState(): SquadState {
 class SquadState {
     val starters =
         players.subList(0, 11).map { toAttributedFplPlayer(it, true) }.toMutableStateList()
+
     val substitutes =
         players.subList(11, 15).map { toAttributedFplPlayer(it, false) }.toMutableStateList()
+
     var captainId by mutableStateOf(starters[0].id)
         private set
+
     var viceCaptainId by mutableStateOf(starters[1].id)
         private set
+
     var playerToSub = kotlin.run {
         val state = mutableStateOf<FplPlayerWithFieldAttributes?>(null)
         object : MutableState<FplPlayerWithFieldAttributes?> by state {
@@ -38,18 +44,8 @@ class SquadState {
                     else resetPotentialSubs()
                 }
         }
-
     }
 
-    private fun resetPotentialSubs() {
-        starters.forEachIndexed { index, player ->
-            starters[index] = player.copy(isPotentialSub = false)
-        }
-
-        substitutes.forEachIndexed { index, player ->
-            substitutes[index] = player.copy(isPotentialSub = false)
-        }
-    }
     companion object {
         const val MIN_NUM_OF_GKP = 1
         const val MIN_NUM_OF_DEF = 3
@@ -64,6 +60,47 @@ class SquadState {
     fun selectViceCaptain(playerId: Int) {
         if (playerId == captainId) swapCaptains()
         else viceCaptainId = playerId
+    }
+
+    fun makeSubstitution(replacementPlayer: FplPlayerWithFieldAttributes) {
+        val playerToSub = playerToSub.value ?: return
+        val arePlayersInSameLineUp =
+            (playerToSub.isStarter && replacementPlayer.isStarter) || (!playerToSub.isStarter && !replacementPlayer.isStarter)
+        when {
+            arePlayersInSameLineUp -> swapPositionsInSameLineUp(playerToSub, replacementPlayer)
+
+        }
+    }
+
+    private fun swapPositionsInDifferentLineUps(
+        playerToSub: FplPlayerWithFieldAttributes,
+        replacementPlayer: FplPlayerWithFieldAttributes
+    ) {
+        if (playerToSub.isStarter) {
+            val indexOfReplacementPlayer = substitutes.indexOf(replacementPlayer)
+            substitutes[indexOfReplacementPlayer] = playerToSub
+
+
+        } else {
+
+        }
+    }
+
+    private fun swapPositionsInSameLineUp(
+        playerToSub: FplPlayerWithFieldAttributes,
+        replacementPlayer: FplPlayerWithFieldAttributes
+    ) {
+        if (playerToSub.isStarter) {
+            val indexOfPlayerToSub = starters.indexOf(playerToSub)
+            val indexOfReplacement = starters.indexOf(replacementPlayer)
+            starters[indexOfPlayerToSub] = replacementPlayer
+            starters[indexOfReplacement] = playerToSub
+        } else {
+            val indexOfPlayerToSub = substitutes.indexOf(playerToSub)
+            val indexOfReplacement = substitutes.indexOf(replacementPlayer)
+            substitutes[indexOfPlayerToSub] = replacementPlayer
+            substitutes[indexOfReplacement] = playerToSub
+        }
     }
 
     private fun toAttributedFplPlayer(
@@ -82,8 +119,12 @@ class SquadState {
         val startersGroupedByPos = starters.groupBy { it.position }
         when {
             playerToSub.position == PlayerPosition.GKP -> setPotentialSubsForGkp(playerToSub)
-            playerToSub.isStarter -> setPotentialSubsForIncomingPlayer(startersGroupedByPos)
-            else -> setPotentialSubsForOutgoingPlayer(playerToSub, startersGroupedByPos)
+            playerToSub.isStarter -> setPotentialSubsForOutgoingPlayer(
+                playerToSub,
+                startersGroupedByPos
+            )
+
+            else -> setPotentialSubsForIncomingPlayer(startersGroupedByPos)
         }
     }
 
@@ -95,36 +136,44 @@ class SquadState {
         val canSubOut =
             canRemovePlayerFromPosition(playerPosition, startersGroupedByPos[playerPosition]!!.size)
         if (canSubOut) {
-            substitutes.forEachIndexed { index, player ->
+            val substitutesCopy = substitutes.map { player ->
                 val isPotentialSub = player.position != PlayerPosition.GKP
-                if (isPotentialSub) substitutes[index] =
-                    substitutes[index].copy(isPotentialSub = true)
+                if (isPotentialSub) player.copy(isPotentialSub = true)
+                else player
             }
+            substitutes.swapList(substitutesCopy)
         }
 
-        starters.forEachIndexed { index, player ->
+        val startersCopy = starters.map { player ->
             val isPotentialSub =
                 player.position == playerToSub.position && player.id != playerToSub.id
-            if (isPotentialSub) starters[index] = starters[index].copy(isPotentialSub = true)
+            if (isPotentialSub) player.copy(isPotentialSub = true)
+            else player
         }
+        starters.swapList(startersCopy)
     }
 
     private fun setPotentialSubsForIncomingPlayer(startersGroupedByPos: GroupedPlayers) {
-        starters.forEachIndexed { index, player ->
+        val startersCopy = starters.map { player ->
             val playerPosition = player.position
             val isValidPosition = canRemovePlayerFromPosition(
                 position = playerPosition,
                 currentNumOfPlayersAtPos = startersGroupedByPos[playerPosition]!!.size
             )
-            if (isValidPosition) starters[index] = starters[index].copy(isPotentialSub = true)
-
+            if (isValidPosition) player.copy(isPotentialSub = true)
+            else player
         }
+        starters.swapList(startersCopy)
 
-        substitutes.forEachIndexed { index, player ->
+        val substitutesCopy = substitutes.map { player ->
             val isPotentialSub =
                 player.position != PlayerPosition.GKP && player.id != this.playerToSub.value?.id
-            if (isPotentialSub) substitutes[index] = substitutes[index].copy(isPotentialSub = true)
+
+            if (isPotentialSub) player.copy(isPotentialSub = true)
+            else player
         }
+        substitutes.swapList(substitutesCopy)
+
     }
 
     private fun setPotentialSubsForGkp(playerToSub: FplPlayerWithFieldAttributes) {
@@ -132,17 +181,29 @@ class SquadState {
             return player.position == playerToSub.position && player.id != playerToSub.id
         }
 
-        starters.forEachIndexed { index, player ->
-            if (isValidPlayer(player)) {
-                starters[index] = player.copy(isPotentialSub = true)
-            }
+        val startersCopy = starters.map { player ->
+            if (isValidPlayer(player)) player.copy(isPotentialSub = true)
+            else player
         }
+        starters.swapList(startersCopy)
 
-        substitutes.forEachIndexed { index, player ->
-            if (isValidPlayer(player)) {
-                substitutes[index] = player.copy(isPotentialSub = true)
-            }
+        val substitutesCopy = substitutes.map { player ->
+            if (isValidPlayer(player)) player.copy(isPotentialSub = true)
+            else player
         }
+        substitutes.swapList(substitutesCopy)
+    }
+
+    private fun resetPotentialSubs() {
+        val startersCopy = starters.map { player ->
+            player.copy(isPotentialSub = false)
+        }
+        starters.swapList(startersCopy)
+
+        val substitutesCopy = substitutes.map { player ->
+            player.copy(isPotentialSub = false)
+        }
+        substitutes.swapList(substitutesCopy)
     }
 
     private fun canRemovePlayerFromPosition(

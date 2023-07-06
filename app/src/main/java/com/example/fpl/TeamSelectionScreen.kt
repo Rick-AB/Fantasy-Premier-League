@@ -62,10 +62,11 @@ import kotlin.math.roundToInt
 fun TeamSelectionScreen(
     squadState: SquadState,
     selectedPlayerProfile: FplPlayerWithStats?,
-    onPlayerClick: (FplPlayerWithStats) -> Unit,
+    setPlayerProfile: (FplPlayerWithStats) -> Unit,
     closeModal: () -> Unit,
     selectCaptain: (Int) -> Unit,
     selectViceCaptain: (Int) -> Unit,
+    selectPlayerToSub: (Int) -> Unit,
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -75,10 +76,11 @@ fun TeamSelectionScreen(
             modifier = Modifier.padding(it),
             squadState = squadState,
             selectedPlayerProfile = selectedPlayerProfile,
-            onPlayerClick = onPlayerClick,
+            setPlayerProfile = setPlayerProfile,
             closeModal = closeModal,
             selectCaptain = selectCaptain,
-            selectViceCaptain = selectViceCaptain
+            selectViceCaptain = selectViceCaptain,
+            selectPlayerToSub = selectPlayerToSub
         )
     }
 }
@@ -88,10 +90,11 @@ fun TeamSelectionBody(
     modifier: Modifier,
     squadState: SquadState,
     selectedPlayerProfile: FplPlayerWithStats?,
-    onPlayerClick: (FplPlayerWithStats) -> Unit,
+    setPlayerProfile: (FplPlayerWithStats) -> Unit,
     closeModal: () -> Unit,
     selectCaptain: (Int) -> Unit,
     selectViceCaptain: (Int) -> Unit,
+    selectPlayerToSub: (Int) -> Unit,
 ) {
     Column(modifier = modifier) {
         Divider(
@@ -107,8 +110,14 @@ fun TeamSelectionBody(
         Spacer(modifier = Modifier.height(16.dp))
         FieldView(
             modifier = Modifier.fillMaxSize(),
-            squadState = squadState,
-            onPlayerClick = onPlayerClick
+            starters = squadState.starters,
+            substitutes = squadState.substitutes,
+            playerToSub = squadState.playerToSub.value,
+            captainId = squadState.captainId,
+            viceCaptainId = squadState.viceCaptainId,
+            setPlayerProfile = setPlayerProfile,
+            cancelSubstitution = { squadState.playerToSub.value = null },
+            makeSubstitution = { squadState.makeSubstitution(it) }
         )
 
         if (selectedPlayerProfile != null) {
@@ -124,7 +133,8 @@ fun TeamSelectionBody(
                     isViceCaptain = selectedPlayerProfile.player.id == squadState.viceCaptainId,
                     closeModal = closeModal,
                     selectCaptain = { selectCaptain(selectedPlayerProfile.player.id); closeModal() },
-                    selectViceCaptain = { selectViceCaptain(selectedPlayerProfile.player.id); closeModal() }
+                    selectViceCaptain = { selectViceCaptain(selectedPlayerProfile.player.id); closeModal() },
+                    onSubstituteClick = { selectPlayerToSub(selectedPlayerProfile.id); closeModal() }
                 )
             }
         }
@@ -134,8 +144,14 @@ fun TeamSelectionBody(
 @Composable
 fun FieldView(
     modifier: Modifier,
-    squadState: SquadState,
-    onPlayerClick: (FplPlayerWithStats) -> Unit
+    starters: List<FplPlayerWithFieldAttributes>,
+    substitutes: List<FplPlayerWithFieldAttributes>,
+    playerToSub: FplPlayerWithFieldAttributes?,
+    captainId: Int,
+    viceCaptainId: Int,
+    setPlayerProfile: (FplPlayerWithStats) -> Unit,
+    cancelSubstitution: () -> Unit,
+    makeSubstitution: (FplPlayerWithFieldAttributes) -> Unit
 ) {
     BoxWithConstraints(modifier = modifier) {
         val density = LocalDensity.current
@@ -193,15 +209,19 @@ fun FieldView(
             horizontalSpacing = horizontalSpace
         ) {
             Starters(
-                starters = squadState.starters,
+                starters = starters,
+                playerToSub = playerToSub,
                 contentWidth = playerWidth,
-                captainId = squadState.captainId,
-                viceCaptainId = squadState.viceCaptainId,
-                onPlayerClick = onPlayerClick
+                captainId = captainId,
+                viceCaptainId = viceCaptainId,
+                setPlayerProfile = setPlayerProfile,
+                cancelSubstitution = cancelSubstitution,
+                makeSubstitution = makeSubstitution
             )
 
             Substitutes(
-                substitutes = squadState.substitutes,
+                substitutes = substitutes,
+                playerToSub = playerToSub,
                 contentWidth = playerWidth,
                 modifier = Modifier.padding(8.dp)
             )
@@ -258,26 +278,41 @@ fun GameweekHeader(modifier: Modifier) {
 @Composable
 fun FieldLayoutScope.Starters(
     starters: List<FplPlayerWithFieldAttributes>,
+    playerToSub: FplPlayerWithFieldAttributes?,
     contentWidth: Dp,
     captainId: Int,
     viceCaptainId: Int,
-    onPlayerClick: (FplPlayerWithStats) -> Unit
+    setPlayerProfile: (FplPlayerWithStats) -> Unit,
+    cancelSubstitution: () -> Unit,
+    makeSubstitution: (FplPlayerWithFieldAttributes) -> Unit,
 ) {
-    starters.forEach {
+    starters.forEach { player ->
         PlayerCard(
             modifier = Modifier
                 .width(contentWidth)
-                .assignPosition(it.position),
-            player = it,
-            isCaptain = it.id == captainId,
-            isViceCaptain = it.id == viceCaptainId,
-            onClick = onPlayerClick
+                .assignPosition(player.position),
+            player = player,
+            playerToSub = playerToSub,
+            isCaptain = player.id == captainId,
+            isViceCaptain = player.id == viceCaptainId,
+            onClick = {
+                when (playerToSub) {
+                    null -> setPlayerProfile(player.toFplPlayerWithStats())
+                    player -> cancelSubstitution()
+                    else -> makeSubstitution(player)
+                }
+            }
         )
     }
 }
 
 @Composable
-fun Substitutes(substitutes: List<FplPlayerWithFieldAttributes>, contentWidth: Dp, modifier: Modifier) {
+fun Substitutes(
+    substitutes: List<FplPlayerWithFieldAttributes>,
+    playerToSub: FplPlayerWithFieldAttributes?,
+    contentWidth: Dp,
+    modifier: Modifier
+) {
     val zeroCornerSize = CornerSize(0.dp)
     Row(
         modifier = modifier
@@ -300,6 +335,7 @@ fun Substitutes(substitutes: List<FplPlayerWithFieldAttributes>, contentWidth: D
                 PlayerCard(
                     modifier = Modifier.width(contentWidth),
                     player = it,
+                    playerToSub = playerToSub,
                     onClick = {}
                 )
             }
