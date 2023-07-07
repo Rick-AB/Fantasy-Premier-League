@@ -10,14 +10,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -112,12 +116,12 @@ fun TeamSelectionBody(
             modifier = Modifier.fillMaxSize(),
             starters = squadState.starters,
             substitutes = squadState.substitutes,
-            playerToSub = squadState.playerToSub.value,
+            playerToSub = squadState.selectedPlayerForSubstitution.value,
             captainId = squadState.captainId,
             viceCaptainId = squadState.viceCaptainId,
             setPlayerProfile = setPlayerProfile,
-            cancelSubstitution = { squadState.playerToSub.value = null },
-            makeSubstitution = { squadState.makeSubstitution(it) }
+            cancelSubstitution = { squadState.selectedPlayerForSubstitution.value = null },
+            makeSubstitution = { replacementPlayer -> squadState.makeSubstitution(replacementPlayer) }
         )
 
         if (selectedPlayerProfile != null) {
@@ -125,12 +129,19 @@ fun TeamSelectionBody(
                 onDismissRequest = closeModal,
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
                 dragHandle = null,
-                shape = Shapes().extraSmall
+                shape = Shapes().extraSmall,
+                modifier = Modifier
+                    .fillMaxWidth(0.95F)
+                    .navigationBarsPadding(),
             ) {
+                val captainOptionsEnabled: () -> Boolean =
+                    { squadState.starters.find { it.id == selectedPlayerProfile.id } != null }
+
                 PlayerProfile(
                     selectedPlayerProfile = selectedPlayerProfile,
                     isCaptain = selectedPlayerProfile.player.id == squadState.captainId,
                     isViceCaptain = selectedPlayerProfile.player.id == squadState.viceCaptainId,
+                    captainOptionsEnabled = captainOptionsEnabled(),
                     closeModal = closeModal,
                     selectCaptain = { selectCaptain(selectedPlayerProfile.player.id); closeModal() },
                     selectViceCaptain = { selectViceCaptain(selectedPlayerProfile.player.id); closeModal() },
@@ -205,8 +216,8 @@ fun FieldView(
                 .drawWithContent {
                     if (shouldRender) drawContent()
                 },
-            verticalSpacing = 16.dp,
-            horizontalSpacing = horizontalSpace
+            crossAxisSpacing = 16.dp,
+            spacing = horizontalSpace
         ) {
             Starters(
                 starters = starters,
@@ -220,10 +231,15 @@ fun FieldView(
             )
 
             Substitutes(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .align(Alignment.BottomCenter),
                 substitutes = substitutes,
                 playerToSub = playerToSub,
                 contentWidth = playerWidth,
-                modifier = Modifier.padding(8.dp)
+                setPlayerProfile = setPlayerProfile,
+                cancelSubstitution = cancelSubstitution,
+                makeSubstitution = makeSubstitution
             )
         }
 
@@ -296,10 +312,11 @@ fun FieldLayoutScope.Starters(
             isCaptain = player.id == captainId,
             isViceCaptain = player.id == viceCaptainId,
             onClick = {
-                when (playerToSub) {
-                    null -> setPlayerProfile(player.toFplPlayerWithStats())
-                    player -> cancelSubstitution()
-                    else -> makeSubstitution(player)
+                when {
+                    playerToSub == null -> setPlayerProfile(player.toFplPlayerWithStats())
+                    playerToSub == player -> cancelSubstitution()
+                    player.isPotentialSub -> makeSubstitution(player)
+                    else -> {}
                 }
             }
         )
@@ -308,11 +325,15 @@ fun FieldLayoutScope.Starters(
 
 @Composable
 fun Substitutes(
+    modifier: Modifier,
     substitutes: List<FplPlayerWithFieldAttributes>,
     playerToSub: FplPlayerWithFieldAttributes?,
     contentWidth: Dp,
-    modifier: Modifier
-) {
+    setPlayerProfile: (FplPlayerWithStats) -> Unit,
+    cancelSubstitution: () -> Unit,
+    makeSubstitution: (FplPlayerWithFieldAttributes) -> Unit,
+
+    ) {
     val zeroCornerSize = CornerSize(0.dp)
     Row(
         modifier = modifier
@@ -327,16 +348,26 @@ fun Substitutes(
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        substitutes.forEach {
+        substitutes.forEachIndexed { index, player ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = it.position.name, style = MaterialTheme.typography.bodyLarge)
+                val position = if (index == 0) player.position.name
+                else "${index}. ${player.position.name}"
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Text(text = position, style = MaterialTheme.typography.bodyLarge)
+
+                Spacer(modifier = Modifier.height(4.dp))
                 PlayerCard(
                     modifier = Modifier.width(contentWidth),
-                    player = it,
+                    player = player,
                     playerToSub = playerToSub,
-                    onClick = {}
+                    onClick = {
+                        when {
+                            playerToSub == null -> setPlayerProfile(player.toFplPlayerWithStats())
+                            playerToSub == player -> cancelSubstitution()
+                            player.isPotentialSub -> makeSubstitution(player)
+                            else -> {}
+                        }
+                    }
                 )
             }
         }

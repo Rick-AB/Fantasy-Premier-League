@@ -26,21 +26,30 @@ import kotlin.math.sin
 @Composable
 fun FieldLayout(
     modifier: Modifier,
-    verticalSpacing: Dp,
-    horizontalSpacing: Dp,
+    crossAxisSpacing: Dp,
+    spacing: Dp,
     content: @Composable FieldLayoutScope.() -> Unit
 ) {
     Layout(
         modifier = modifier,
         content = { FieldLayoutScope.content() }
     ) { measurables, constraints ->
-        val placeablesGroupedByPlayerPosition =
-            measurables.map { measurable -> measurable.measure(constraints) }
-                .groupBy { (it.parentData as? PlayerData)?.position }
+        val looseConstraints = constraints.copy(
+            minWidth = 0,
+            minHeight = 0,
+        )
+
+        val placeablesGroupedByPlayerPosition = measurables
+            .map { measurable -> measurable.measure(looseConstraints) }
+            .groupBy { (it.parentData as? PlayerData)?.position }
+
+        val horizontalSpacingAsPx = spacing.toPx().roundToInt()
+        val verticalSpacingAsPx = crossAxisSpacing.toPx().roundToInt()
+        val height = placeablesGroupedByPlayerPosition
+            .map { entry -> entry.value.maxOf { it.height } }
+            .sum() + (verticalSpacingAsPx * (placeablesGroupedByPlayerPosition.size - 1))
 
         layout(constraints.maxWidth, constraints.maxHeight) {
-            val horizontalSpacingAsPx = horizontalSpacing.toPx().roundToInt()
-            val verticalSpacingAsPx = verticalSpacing.toPx().roundToInt()
             var y = 0
 
             placeablesGroupedByPlayerPosition.forEach { (position, placeables) ->
@@ -59,7 +68,16 @@ fun FieldLayout(
                     y += verticalSpacingAsPx + placeables.maxOf { it.height }
                 } else {
                     placeables.forEach { placeable ->
-                        placeable.placeRelative(0, y)
+                        val availableHeight = constraints.maxHeight - y
+                        val spaceBetweenPositionedItems = availableHeight - placeable.height
+                        val newY =
+                            if (spaceBetweenPositionedItems < verticalSpacingAsPx)
+                                (constraints.maxHeight - placeable.height) +
+                                        (abs(spaceBetweenPositionedItems) + verticalSpacingAsPx)
+                            else
+                                constraints.maxHeight - placeable.height
+
+                        placeable.placeRelative(0, newY)
                     }
                 }
             }
@@ -213,4 +231,20 @@ fun DrawScope.drawKickOffLine(fieldBounds: FieldBounds) {
 
 data class PlayerData(val position: PlayerPosition) : ParentDataModifier {
     override fun Density.modifyParentData(parentData: Any?) = this@PlayerData
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        val otherPlayerData = other as? PlayerData ?: return false
+
+        return position === otherPlayerData.position
+    }
+
+    override fun hashCode(): Int {
+        return position.hashCode()
+    }
+
+    override fun toString(): String {
+        return "PlayData(position=$position)"
+    }
+
 }

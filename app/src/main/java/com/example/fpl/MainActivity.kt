@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
                         selectPlayerToSub = { playerId ->
                             val playerWithFieldAttributes =
                                 (squadState.starters + squadState.substitutes).find { it.id == playerId }
-                            squadState.playerToSub.value = playerWithFieldAttributes
+                            squadState.selectedPlayerForSubstitution.value = playerWithFieldAttributes
                         }
                     )
                 }

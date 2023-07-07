@@ -64,6 +64,7 @@ fun PlayerProfile(
     selectedPlayerProfile: FplPlayerWithStats,
     isCaptain: Boolean,
     isViceCaptain: Boolean,
+    captainOptionsEnabled: Boolean,
     closeModal: () -> Unit,
     selectCaptain: () -> Unit,
     selectViceCaptain: () -> Unit,
@@ -101,6 +102,7 @@ fun PlayerProfile(
                 .navigationBarsPadding(),
             isCaptain = isCaptain,
             isViceCaptain = isViceCaptain,
+            captainOptionsEnabled = captainOptionsEnabled,
             selectCaptain = selectCaptain,
             selectViceCaptain = selectViceCaptain
         )
@@ -319,6 +321,7 @@ fun CaptainActions(
     modifier: Modifier,
     isCaptain: Boolean,
     isViceCaptain: Boolean,
+    captainOptionsEnabled: Boolean,
     selectCaptain: () -> Unit,
     selectViceCaptain: () -> Unit
 ) {
@@ -330,6 +333,7 @@ fun CaptainActions(
             modifier = Modifier.weight(1f),
             text = stringResource(id = R.string.captain),
             checked = isCaptain,
+            enabled = captainOptionsEnabled,
             onClick = selectCaptain
         )
 
@@ -337,6 +341,7 @@ fun CaptainActions(
             modifier = Modifier.weight(1f),
             text = stringResource(id = R.string.vice_captain),
             checked = isViceCaptain,
+            enabled = captainOptionsEnabled,
             onClick = selectViceCaptain
         )
     }
@@ -347,11 +352,12 @@ fun CaptainItem(
     modifier: Modifier,
     text: String,
     checked: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
-            enabled = !checked,
+            enabled = !checked && enabled,
             checked = checked,
             onCheckedChange = { onClick() },
             colors = CheckboxDefaults.colors(
@@ -368,7 +374,7 @@ fun CaptainItem(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
-            color = Color.Black
+            color = Color.White
         )
     }
 }
@@ -409,6 +415,7 @@ fun PlayerProfilePrev() {
     PlayerProfile(player,
         isCaptain = true,
         isViceCaptain = false,
+        captainOptionsEnabled = false,
         closeModal = {},
         selectCaptain = {},
         selectViceCaptain = {}

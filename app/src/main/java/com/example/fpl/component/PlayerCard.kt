@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -34,12 +35,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fpl.model.FplPlayerWithFieldAttributes
-import com.example.fpl.model.FplPlayerWithStats
 import com.example.fpl.players
 import com.example.fpl.ui.theme.DarkPurple
 import com.example.fpl.ui.theme.Green
 import com.example.fpl.ui.theme.LightBlue
-import com.example.fpl.ui.theme.SeaBlue
 import com.example.fpl.ui.theme.SemiDarkGreen
 
 @Composable
@@ -51,6 +50,7 @@ fun PlayerCard(
     isViceCaptain: Boolean = false,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     val roundedShape = Shapes().extraSmall
     val (color, columnModifier) = remember(playerToSub) {
         val isSubActive = playerToSub != null
@@ -93,7 +93,7 @@ fun PlayerCard(
 
     Column(
         modifier = modifier
-            .clickable { onClick() }
+            .clickable(interactionSource = interactionSource, indication = null) { onClick() }
             .then(columnModifier)
 
     ) {
@@ -114,32 +114,32 @@ fun PlayerCard(
             }
         }
 
+        val reusableTextStyle = MaterialTheme.typography.bodySmall.copy(
+            textAlign = TextAlign.Center,
+            color = Color.White,
+            fontWeight = FontWeight.SemiBold
+        )
         Spacer(modifier = Modifier.height(4.dp))
         AutoResizeText(
             text = player.name,
-            style = MaterialTheme.typography.bodySmall.copy(
-                textAlign = TextAlign.Center,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            ),
+            style = reusableTextStyle,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(20.dp)
                 .then(
-                    if (playerToSub != null && player.isPotentialSub) Modifier.background(Color.Transparent)
-                    else Modifier.background(DarkPurple)
+                    if (playerToSub != null && (player.isPotentialSub || playerToSub.id == player.id))
+                        Modifier.background(Color.Transparent)
+                    else
+                        Modifier.background(DarkPurple)
                 )
                 .wrapContentHeight(align = Alignment.CenterVertically)
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 4.dp)
         )
 
         val bottomCornerSize = CornerSize(6.dp)
         AutoResizeText(
             text = "ARS",
-            style = MaterialTheme.typography.bodySmall.copy(
-                textAlign = TextAlign.Center,
-                color = Color.White
-            ),
+            style = reusableTextStyle,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(20.dp)
@@ -153,7 +153,7 @@ fun PlayerCard(
                     )
                 )
                 .wrapContentHeight(align = Alignment.CenterVertically)
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 4.dp)
         )
     }
 }
