@@ -1,4 +1,4 @@
-package com.example.fpl
+package com.example.fpl.model
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -7,9 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
-import com.example.fpl.model.FplPlayer
-import com.example.fpl.model.FplPlayerWithFieldAttributes
-import com.example.fpl.model.PlayerPosition
+import com.example.fpl.R
+import com.example.fpl.swapList
 
 typealias GroupedPlayers = Map<PlayerPosition, List<FplPlayerWithFieldAttributes>>
 
@@ -151,14 +150,16 @@ class SquadState {
         val playerPosition = selectedPlayerForSubstitution.position
         val canSubOut =
             canRemovePlayerFromPosition(playerPosition, startersGroupedByPos[playerPosition]!!.size)
-        if (canSubOut) {
-            val substitutesCopy = substitutes.map { player ->
-                val isPotentialSub = player.position != PlayerPosition.GKP
-                if (isPotentialSub) player.copy(isPotentialSub = true)
-                else player
-            }
-            substitutes.swapList(substitutesCopy)
+
+        val substitutesCopy = substitutes.map { player ->
+            val isPotentialSub =
+                if (canSubOut) player.position != PlayerPosition.GKP
+                else player.position == selectedPlayerForSubstitution.position
+
+            if (isPotentialSub) player.copy(isPotentialSub = true)
+            else player
         }
+        substitutes.swapList(substitutesCopy)
     }
 
     private fun setPotentialSubsForIncomingPlayer(startersGroupedByPos: GroupedPlayers) {

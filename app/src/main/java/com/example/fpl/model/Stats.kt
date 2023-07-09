@@ -1,19 +1,14 @@
 package com.example.fpl.model
 
-data class Stats(
-    val form: Float,
-    val price: Float,
-    val selectedPercentage: Float,
-    val gameweekPoints: Int,
-    val totalPoints: Int,
-    val ictIndex: Int
+data class Stat(
+    val statName: String,
+    val statValue: Float,
+    val statRanking: Pair<Int, Int>
 )
 
-val stats = Stats(
-    form = 7.7F,
-    price = 11.0F,
-    selectedPercentage = 23.0F,
-    gameweekPoints = 7,
-    totalPoints = 69,
-    ictIndex = 7823,
+val stats = listOf(
+    Stat(statName = "Price", statValue = 8.5F, statRanking = Pair(2, 246)),
+    Stat(statName = "Form", statValue = 0.0F, statRanking = Pair(241, 246)),
+    Stat(statName = "Pts / Match", statValue = 5.7F, statRanking = Pair(3, 246)),
+    Stat(statName = "ICT Index", statValue = 309.2F, statRanking = Pair(4, 246)),
 )

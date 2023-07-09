@@ -35,27 +35,16 @@ open class FplPlayer(
     )
 
     fun toFplPlayerWithStats(): FplPlayerWithStats {
-        val (form, price, selectedPercentage, gameweekPoints, totalPoints, ictIndex) = stats
         return FplPlayerWithStats(
             player = this,
-            form = form,
-            price = price,
-            selectedPercentage = selectedPercentage,
-            gameweekPoints = gameweekPoints,
-            totalPoints = totalPoints,
-            ictIndex = ictIndex
+            stats = stats
         )
     }
 }
 
 data class FplPlayerWithStats(
     val player: FplPlayer,
-    val form: Float,
-    val price: Float,
-    val selectedPercentage: Float,
-    val gameweekPoints: Int,
-    val totalPoints: Int,
-    val ictIndex: Int
+    val stats: List<Stat>
 ) : FplPlayer(player)
 
 data class FplPlayerWithFieldAttributes(

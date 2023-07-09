@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fpl.model.FplPlayerWithFieldAttributes
-import com.example.fpl.players
+import com.example.fpl.model.players
 import com.example.fpl.ui.theme.DarkPurple
 import com.example.fpl.ui.theme.Green
 import com.example.fpl.ui.theme.LightBlue

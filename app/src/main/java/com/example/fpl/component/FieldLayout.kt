@@ -49,7 +49,7 @@ fun FieldLayout(
             .map { entry -> entry.value.maxOf { it.height } }
             .sum() + (verticalSpacingAsPx * (placeablesGroupedByPlayerPosition.size - 1))
 
-        layout(constraints.maxWidth, constraints.maxHeight) {
+        layout(constraints.maxWidth, height) {
             var y = 0
 
             placeablesGroupedByPlayerPosition.forEach { (position, placeables) ->

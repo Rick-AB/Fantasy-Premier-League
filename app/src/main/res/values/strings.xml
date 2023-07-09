@@ -4,9 +4,12 @@
     <string name="full_profile">Full Profile</string>
     <string name="form">Form</string>
     <string name="value">Value</string>
-    <string name="selected">Selected</string>
+    <string name="selectedd">Selected</string>
     <string name="total">Total</string>
     <string name="ict_index">ICT index</string>
     <string name="captain">Captain</string>
     <string name="vice_captain">Vice Captain</string>
+    <string name="pick_team">Pick Team</string>
+    <string name="gameweek_deadline">Gameweek %1s Deadline: </string>
+    <string name="ranking_for">Ranking for %s</string>
 </resources>

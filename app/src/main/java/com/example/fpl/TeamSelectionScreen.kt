@@ -4,24 +4,22 @@ package com.example.fpl
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.BottomAppBarDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,29 +37,37 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.fpl.component.ClickableIcon
 import com.example.fpl.component.FieldLayout
+import com.example.fpl.component.GradientBackground
 import com.example.fpl.component.PlayerCard
 import com.example.fpl.component.PlayerProfile
+import com.example.fpl.component.SlitLine
 import com.example.fpl.component.draw18YardArc
 import com.example.fpl.component.drawCornerArc
 import com.example.fpl.component.drawField
 import com.example.fpl.component.drawFieldLine
 import com.example.fpl.component.drawKickOffLine
+import com.example.fpl.component.horizontalGradientBrush
+import com.example.fpl.model.ChipStatus
 import com.example.fpl.model.Field
 import com.example.fpl.model.FplPlayerWithFieldAttributes
 import com.example.fpl.model.FplPlayerWithStats
+import com.example.fpl.model.SquadState
+import com.example.fpl.ui.theme.DarkFieldGreen
 import com.example.fpl.ui.theme.DarkPurple
-import com.example.fpl.ui.theme.LightGray
 import com.example.fpl.ui.theme.SemiTransparentGreen
 import kotlin.math.roundToInt
+
 
 @Composable
 fun TeamSelectionScreen(
@@ -77,7 +84,9 @@ fun TeamSelectionScreen(
         topBar = { TeamSelectionTopBar() }
     ) {
         TeamSelectionBody(
-            modifier = Modifier.padding(it),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it),
             squadState = squadState,
             selectedPlayerProfile = selectedPlayerProfile,
             setPlayerProfile = setPlayerProfile,
@@ -101,15 +110,34 @@ fun TeamSelectionBody(
     selectPlayerToSub: (Int) -> Unit,
 ) {
     Column(modifier = modifier) {
-        Divider(
-            thickness = 1.dp,
-            modifier = Modifier
-                .fillMaxWidth(0.8F)
-                .align(Alignment.CenterHorizontally)
-        )
+        GradientBackground {
+            Column {
+                SlitLine(
+                    color = Color.White,
+                    modifier = Modifier
+                        .fillMaxWidth(0.9F)
+                        .align(Alignment.CenterHorizontally)
+                )
 
-        Spacer(modifier = Modifier.height(8.dp))
-        GameweekHeader(modifier = Modifier.padding(horizontal = 8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                GameweekHeader(modifier = Modifier.padding(horizontal = 8.dp))
+
+                Spacer(modifier = Modifier.height(12.dp))
+                SlitLine(
+                    color = Color.White,
+                    modifier = Modifier
+                        .fillMaxWidth(0.9F)
+                        .align(Alignment.CenterHorizontally)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Chips(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
         FieldView(
@@ -130,9 +158,7 @@ fun TeamSelectionBody(
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
                 dragHandle = null,
                 shape = Shapes().extraSmall,
-                modifier = Modifier
-                    .fillMaxWidth(0.95F)
-                    .navigationBarsPadding(),
+                modifier = Modifier.fillMaxWidth(0.97F)
             ) {
                 val captainOptionsEnabled: () -> Boolean =
                     { squadState.starters.find { it.id == selectedPlayerProfile.id } != null }
@@ -194,10 +220,11 @@ fun FieldView(
             Pair(width.roundToInt().dp, space.roundToInt().dp)
         }
 
-
-        FieldLayout(
-            modifier = Modifier
-                .drawBehind {
+        Column(modifier = Modifier
+            .verticalScroll(rememberScrollState())
+            .fillMaxSize()
+            .drawWithCache {
+                onDrawBehind {
                     drawField(field.fieldBounds)
                     drawFieldLine(field.touchlineBounds)
                     drawFieldLine(field.eighteenYardBoxBounds)
@@ -213,27 +240,31 @@ fun FieldView(
                         field.rightFlagEndCoordinate
                     )
                 }
-                .drawWithContent {
-                    if (shouldRender) drawContent()
-                },
-            crossAxisSpacing = 16.dp,
-            spacing = horizontalSpace
+            }
+            .drawWithContent { if (shouldRender) drawContent() }
         ) {
-            Starters(
-                starters = starters,
-                playerToSub = playerToSub,
-                contentWidth = playerWidth,
-                captainId = captainId,
-                viceCaptainId = viceCaptainId,
-                setPlayerProfile = setPlayerProfile,
-                cancelSubstitution = cancelSubstitution,
-                makeSubstitution = makeSubstitution
-            )
+            FieldLayout(
+                modifier = Modifier,
+                crossAxisSpacing = 16.dp,
+                spacing = horizontalSpace
+            ) {
+                Starters(
+                    starters = starters,
+                    playerToSub = playerToSub,
+                    contentWidth = playerWidth,
+                    captainId = captainId,
+                    viceCaptainId = viceCaptainId,
+                    setPlayerProfile = setPlayerProfile,
+                    cancelSubstitution = cancelSubstitution,
+                    makeSubstitution = makeSubstitution
+                )
+            }
 
+            Spacer(modifier = Modifier.height(40.dp))
             Substitutes(
                 modifier = Modifier
-                    .padding(8.dp)
-                    .align(Alignment.BottomCenter),
+                    .background(DarkFieldGreen)
+                    .padding(8.dp),
                 substitutes = substitutes,
                 playerToSub = playerToSub,
                 contentWidth = playerWidth,
@@ -242,7 +273,6 @@ fun FieldView(
                 makeSubstitution = makeSubstitution
             )
         }
-
     }
 }
 
@@ -250,7 +280,9 @@ fun FieldView(
 fun TeamSelectionTopBar() {
     TopAppBar(
         navigationIcon = { ClickableIcon(imageVector = Icons.Default.ArrowBack) { } },
-        title = { TeamSelectionTitle(text = "Pinky and the bane") },
+        title = { TeamSelectionTitle(text = stringResource(id = R.string.pick_team)) },
+        modifier = Modifier.background(horizontalGradientBrush),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
     )
 }
 
@@ -262,7 +294,7 @@ fun TeamSelectionTitle(
 ) {
     Text(
         text = text,
-        style = MaterialTheme.typography.titleLarge,
+        style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
         color = DarkPurple,
         modifier = modifier,
@@ -272,21 +304,20 @@ fun TeamSelectionTitle(
 
 @Composable
 fun GameweekHeader(modifier: Modifier) {
-    Box(
-        modifier = modifier
-            .height(IntrinsicSize.Max)
-            .fillMaxWidth()
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxWidth()
     ) {
-        ClickableIcon(
-            modifier = Modifier.align(Alignment.CenterStart),
-            backgroundColor = LightGray,
-            iconRes = R.drawable.chevron_left,
-        ) { }
-
-        TeamSelectionTitle(
-            text = "Gameweek 38",
+        Text(
+            text = stringResource(R.string.gameweek_deadline, "1"),
             textAlign = TextAlign.Center,
-            modifier = Modifier.align(Alignment.Center)
+        )
+
+        Text(
+            text = "Friday 11 Aug, 18:30",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
@@ -371,5 +402,82 @@ fun Substitutes(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun Chips(modifier: Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Chip(
+            modifier = Modifier.weight(1f),
+            chipName = "Bench Boost",
+            chipStatus = ChipStatus.NOT_PLAYED
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+        Chip(
+            modifier = Modifier.weight(1f),
+            chipName = "Free Hit",
+            chipStatus = ChipStatus.UNAVAILABLE
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+        Chip(
+            modifier = Modifier.weight(1f),
+            chipName = "Triple Captain",
+            chipStatus = ChipStatus.NOT_PLAYED
+        )
+    }
+}
+
+@Composable
+fun Chip(modifier: Modifier, chipName: String, chipStatus: ChipStatus) {
+    Card(
+        modifier = modifier,
+        shape = Shapes().extraSmall,
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        val (chipBackgroundColor, chopTextColor) = if (chipStatus != ChipStatus.UNAVAILABLE)
+            Pair(DarkPurple, Color.White)
+        else
+            Pair(Color.White, DarkPurple)
+
+        Text(
+            text = chipName,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            color = chopTextColor,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(chipBackgroundColor)
+                .padding(vertical = 2.dp),
+        )
+
+        val otherColor = if (chipStatus != ChipStatus.UNAVAILABLE) DarkPurple else Color.Gray
+        if (chipStatus == ChipStatus.UNAVAILABLE) {
+            Divider(
+                thickness = 1.dp,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+            )
+        }
+
+        val chipStatusText = when (chipStatus) {
+            ChipStatus.PLAYED -> "PLAYED"
+            ChipStatus.NOT_PLAYED -> "PLAY"
+            ChipStatus.UNAVAILABLE -> "UNAVAILABLE"
+        }
+        Text(
+            text = chipStatusText,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            color = otherColor,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(vertical = 2.dp)
+        )
     }
 }

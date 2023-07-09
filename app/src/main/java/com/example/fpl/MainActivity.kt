@@ -10,12 +10,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
 import com.example.fpl.model.FplPlayerWithStats
+import com.example.fpl.model.rememberSquadState
 import com.example.fpl.ui.theme.FplTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             FplTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -32,7 +35,8 @@ class MainActivity : ComponentActivity() {
                         selectPlayerToSub = { playerId ->
                             val playerWithFieldAttributes =
                                 (squadState.starters + squadState.substitutes).find { it.id == playerId }
-                            squadState.selectedPlayerForSubstitution.value = playerWithFieldAttributes
+                            squadState.selectedPlayerForSubstitution.value =
+                                playerWithFieldAttributes
                         }
                     )
                 }

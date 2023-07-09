@@ -17,9 +17,10 @@ fun AutoResizeText(
     text: String,
     modifier: Modifier,
     color: Color = Color.Unspecified,
-    style: TextStyle = MaterialTheme.typography.bodyMedium
+    style: TextStyle = MaterialTheme.typography.bodyMedium,
+    reportUseableStyle: ((TextStyle) -> Unit)? = null
 ) {
-    var resizeableTextStyle by remember { mutableStateOf(style) }
+    var resizeableTextStyle by remember(style) { mutableStateOf(style) }
     var shouldDraw by remember { mutableStateOf(false) }
 
 
@@ -39,6 +40,7 @@ fun AutoResizeText(
                     resizeableTextStyle.copy(fontSize = resizeableTextStyle.fontSize * 0.95)
             } else {
                 shouldDraw = true
+                if (reportUseableStyle != null) reportUseableStyle(resizeableTextStyle)
             }
         }
     )
