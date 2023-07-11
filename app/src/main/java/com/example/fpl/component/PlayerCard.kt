@@ -136,9 +136,9 @@ fun PlayerCard(
                 .padding(horizontal = 4.dp)
         )
 
-        val bottomCornerSize = CornerSize(6.dp)
+        val bottomCornerSize = CornerSize(4.dp)
         AutoResizeText(
-            text = "ARS",
+            text = player.club.nextFixture,
             style = reusableTextStyle,
             modifier = Modifier
                 .fillMaxWidth()

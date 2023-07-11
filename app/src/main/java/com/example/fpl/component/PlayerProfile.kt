@@ -85,7 +85,7 @@ fun PlayerProfile(
                 PlayerDetails(
                     modifier = Modifier,
                     playerName = selectedPlayerProfile.name,
-                    playerClub = selectedPlayerProfile.clubName,
+                    playerClub = selectedPlayerProfile.club.clubName,
                     playerPosition = selectedPlayerProfile.position,
                     playerShirt = selectedPlayerProfile.shirtRes,
                     closeModal = closeModal
